@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二次会クイズ大会</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .slide {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            padding: 40px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+        
+        .slide.active {
+            display: flex;
+        }
+        
+        .title-slide {
+    position: relative;
+    background: #000; /* 読み込み中は黒背景 */
+}
+
+/* 終了スライド */
+.closing-slide{
+  position: relative;
+  background: transparent;
+  /* ここで拡大率と表示位置を変数で管理 */
+  --bg-zoom: 100%;   /* 100%＝画面の高さにフィット。90%なら少し引く */
+  --bg-x: 50%;
+  --bg-y: 50%;
+}
+.closing-slide::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background-image:url('https://raw.githubusercontent.com/schiba0722/baaachi/b16fa7f8264bd2b2f721185d865f7c21d2b6dc44/483046.jpg');
+  background-size: auto var(--bg-zoom);      /* ←ココを cover から変更 */
+  background-position: var(--bg-x) var(--bg-y);
+  background-repeat:no-repeat;
+  z-index:0;
+}
+.closing-slide::after{ content:''; position:absolute; inset:0; background:rgba(0,0,0,.45); z-index:1; }
+.closing-slide > *{ position:relative; z-index:2; }
+
+
+
+
+
+.title-slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('https://raw.githubusercontent.com/schiba0722/baaachi/835650bf776b55f28f9a9759ddea0e25bdbda931/481028.jpg');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+}
+
+.title-slide::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4); /* 黒のオーバーレイで文字を見やすく */
+    z-index: 0;
+}
+
+/* 文字は上に */
+.title-slide h1,
+.title-slide h2,
+.title-slide .placeholder-text {
+    position: relative;
+    z-index: 1;
+}
+        
+        .question-slide {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .answer-slide {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        
+        h1 {
+            font-size: 80px;
+            margin-bottom: 30px;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+            animation: fadeInDown 1s;
+            z-index: 1;
+        }
+        
+        h2 {
+            font-size: 50px;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            z-index: 1;
+        }
+        
+        .question-number {
+            font-size: 45px;
+            color: #FFD700;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .question-text {
+            font-size: 48px;
+            line-height: 1.6;
+            margin: 20px 0;
+            padding: 30px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .answer-text {
+            font-size: 52px;
+            font-weight: bold;
+            margin: 30px 0;
+            padding: 40px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+            color: #FFD700;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            line-height: 1.4;
+        }
+        
+        .hint-text {
+            font-size: 35px;
+            color: #fff;
+            font-style: italic;
+            margin-top: 15px;
+        }
+        
+/* 画像枠のサイズを明示してカット（トリミング）を効かせる */
+/* 画像枠：デフォルトは中央。位置と拡大率は変数で制御 */
+.photo-container {
+  margin-top: 30px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+  width: min(38vw, 480px);
+  aspect-ratio: 3 / 4;
+
+  /* デフォルト値 */
+  --opx: 50%;
+  --opy: 50%;
+  --z: 1;
+}
+/* 横長の写真用の枠 */
+.photo-container.wide-4x3 { aspect-ratio: 4 / 3; width: min(60vw, 720px); }
+.photo-container.wide-16x9 { aspect-ratio: 16 / 9; width: min(70vw, 900px); }
+
+/* 余白が出ても全部見せたいとき用 */
+.photo-container.contain img { object-fit: contain !important; transform: none; }
+
+
+.photo-container img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+
+  /* ★ここがポイント：固定の center 20% をやめ、変数で制御 */
+  object-position: var(--opx) var(--opy);
+
+  transform: scale(var(--z));
+  transform-origin: var(--opx) var(--opy);
+}
+
+/* ユーティリティ（必要分だけ使ってOK） */
+.focus-top    { --opy: 15%; }
+.focus-center { --opy: 50%; }
+.focus-bottom { --opy: 85%; }   /* 下を見せる。90% などに調整可 */
+.focus-left   { --opx: 15%; }
+.focus-right  { --opx: 85%; }
+.zoom-110 { --z: 1.10; }
+.zoom-120 { --z: 1.20; }
+.zoom-140 { --z: 1.40; }
+/* ちょっと引く用のユーティリティ */
+.zoom-95 { --z: 0.95; }  /* 5%引き */
+.zoom-90 { --z: 0.90; }  /* 10%引き */
+.zoom-85 { --z: 0.85; }  /* 15%引き */
+.zoom-80 { --z: 0.80; }  /* 20%引き */
+.zoom-75 { --z: 0.75; }  /* 25%引き */
+
+/* （必要なら横長にしたい時用） */
+.photo-container.wide {
+  aspect-ratio: 4 / 3;          /* 3:4 → 4:3 に */
+  width: min(60vw, 700px);      /* 少し大きめ */
+}
+
+        
+        .controls {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+        
+        button {
+            padding: 18px 35px;
+            font-size: 26px;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: 3px solid white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: rgba(255,255,255,0.5);
+            transform: scale(1.05);
+        }
+        
+        .slide-indicator {
+            position: fixed;
+            top: 40px;
+            right: 40px;
+            font-size: 28px;
+            background: rgba(255,255,255,0.3);
+            padding: 12px 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            font-weight: bold;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .placeholder-text {
+            font-size: 20px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-indicator" id="indicator">1 / 11</div>
+    
+    <!-- スライド1: タイトル -->
+    <div class="slide active title-slide">
+        <h1>🎉 新婦クイズ大会 🎉</h1>
+        <h2>新郎と参列者の皆さん、<br>新婦のことをどれだけ知ってる？</h2>
+    </div>
+    
+    <!-- スライド2: Q1 問題 -->
+	    <div class="slide question-slide">
+	        <div class="question-number">第1問</div>
+	        <div class="question-text">
+	            新婦が好きな<br>
+	            アイドルとお笑い芸人は？
+	        </div>
+	<div class="photo-container">
+	  <img
+	    src="https://raw.githubusercontent.com/schiba0722/baaachi/ec87885f41afa073008fbfb4200e0b9d6f482b62/483050.jpg">
+	</div>
+	    </div>
+    
+    <!-- スライド3: Q1 答え -->
+    <div class="slide answer-slide">
+        <div class="question-number">第1問 正解</div>
+        <div class="answer-text">
+            アイドル：<br>ハイライト(BEAST)<br><br>
+            お笑い芸人：<br>例えツッコミ
+        </div>
+    </div>
+    
+    <!-- スライド4: Q2 問題 -->
+    <div class="slide question-slide">
+        <div class="question-number">第2問</div>
+        <div class="question-text">
+            新婦の寝顔は<br>
+            いつもどんな感じ？
+        </div>
+        <div class="hint-text">（新郎に実演してもらいます！）</div>
+	<div class="photo-container" style="--opy: 55%;">
+	  <img
+	    src="https://raw.githubusercontent.com/schiba0722/baaachi/ec87885f41afa073008fbfb4200e0b9d6f482b62/483069.jpg">
+	</div>
+    </div>
+    
+    <!-- スライド5: Q2 答え -->
+    <div class="slide answer-slide">
+        <div class="question-number">第2問 正解</div>
+        <div class="answer-text">
+            新郎による実演を<br>
+            ご覧ください！
+        </div>
+        <div class="hint-text">（証拠写真もあります...笑）</div>
+    </div>
+    
+    <!-- スライド6: Q3 問題 -->
+    <div class="slide question-slide">
+        <div class="question-number">第3問</div>
+        <div class="question-text">
+            新婦が告白して<br>
+            欲しかった場所は？
+        </div>
+        <div class="photo-container" style="--opy: 35%;">
+            <img src="https://raw.githubusercontent.com/schiba0722/baaachi/749ec95e187e3f3e9ffcbde6f98a52810bb9729b/483071.jpg">
+        </div>
+    </div>
+    
+    <!-- スライド7: Q3 答え -->
+    <div class="slide answer-slide">
+        <div class="question-number">第3問 正解</div>
+        <div class="answer-text">
+            万博記念公園の<br>
+            太陽の塔の前 🌅
+        </div>
+        <div class="hint-text">ロマンチックですね！</div>
+    </div>
+    
+    <!-- スライド8: Q4 問題 -->
+    <div class="slide question-slide">
+        <div class="question-number">第4問</div>
+        <div class="question-text">
+            新婦が学生時代に唯一<br>
+            不採用になった<br>
+            アルバイト先はどこ？
+        </div>
+        <div class="photo-container">
+            <img src="https://raw.githubusercontent.com/schiba0722/baaachi/749ec95e187e3f3e9ffcbde6f98a52810bb9729b/483068.jpg">
+        </div>
+    </div>
+    
+    <!-- スライド9: Q4 答え -->
+    <div class="slide answer-slide">
+        <div class="question-number">第4問 正解</div>
+        <div class="answer-text">
+            サーティワン<br>
+            アイスクリーム<br>
+            イオン千歳店 🍦
+        </div>
+        <div class="hint-text">今ならきっと受かります！</div>
+    </div>
+    
+    <!-- スライド10: Q5 問題 -->
+    <div class="slide question-slide">
+        <div class="question-number">第5問（最終問題）</div>
+        <div class="question-text">
+            新郎がJAL時代に<br>
+            してしまった<br>
+            人生最大のミスとは？
+        </div>
+        <div class="photo-container contain">
+            <img src="https://raw.githubusercontent.com/schiba0722/baaachi/b16fa7f8264bd2b2f721185d865f7c21d2b6dc44/481029.jpg">
+        </div>
+    </div>
+    
+    <!-- スライド11: Q5 答え -->
+    <div class="slide answer-slide">
+        <div class="question-number">第5問 正解</div>
+        <div class="answer-text">
+            拳銃預かり確認ミスで<br>
+            新千歳→羽田便を<br>
+            30分遅延させた 😱
+        </div>
+        <div class="hint-text">今では笑い話です！</div>
+    </div>
+    <!-- スライド12: 終了 -->
+<div class="slide closing-slide" style="--bg-zoom: 90%;">
+        <h1>クイズ大会終了</h1>
+        <h2>皆さんありがとうございました！！</h2>
+    </div>
+    <div class="controls">
+        <button onclick="prevSlide()">◀ 前へ</button>
+        <button onclick="nextSlide()">次へ ▶</button>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const indicator = document.getElementById('indicator');
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+            indicator.textContent = `${currentSlide + 1} / ${slides.length}`;
+        }
+        
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+        
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+        
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            if (touchStartX - touchEndX > 50) {
+                nextSlide();
+            } else if (touchEndX - touchStartX > 50) {
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+</html>
