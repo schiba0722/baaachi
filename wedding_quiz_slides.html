@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>二次会クイズ大会</title>
+    <title>尻🍑割れ目アップ・ダウンゲーム</title>
     <style>
         * {
             margin: 0;
@@ -37,7 +37,17 @@
     position: relative;
     background: #000; /* 読み込み中は黒背景 */
 }
+/* タイトルスライドの文字を上に寄せる */
+.slide.title-slide{
+  justify-content: flex-start;   /* 中央 → 上寄せ */
+  padding-top: 12vh;             /* 余白で下げ具合を微調整（8〜16vhで調整） */
+  gap: 1.2rem;                   /* h1 と h2 の間隔 */
+}
 
+/* 小さめ画面での微調整（任意） */
+@media (max-width: 640px){
+  .slide.title-slide{ padding-top: 9vh; }
+}
 /* 終了スライド */
 .closing-slide{
   position: relative;
@@ -274,7 +284,7 @@
     
     <!-- スライド1: タイトル -->
     <div class="slide active title-slide">
-        <h1>🎉 新婦クイズ大会 🎉</h1>
+        <h1>尻🍑割れ目アップ・ダウンゲーム</h1>
         <h2>新郎と参列者の皆さん、<br>新婦のことをどれだけ知ってる？</h2>
     </div>
     
